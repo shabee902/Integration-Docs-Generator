@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ data.title }}</title>
+  <link rel="stylesheet" href="{{ css_path }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <div class="cover">
+    <div class="brand">
+      <img src="templates/logo.png" alt="Logo">
+      <div class="brand-text">Lobster Profile Docs</div>
+    </div>
+    <h1>{{ data.title | replace('_','_&ZeroWidthSpace;') | safe }}</h1>
+    <div class="meta">
+      <div><strong>Generated:</strong> {{ generated }}</div>
+      <div><strong>Source:</strong> {{ data.source_file }}</div>
+    </div>
+  </div>
+{% if data.workflow_image %}
+<h2>Workflow</h2>
+<div class="workflow">
+    <a href="{{ data.workflow_image }}" target="_blank">
+        <img src="{{ data.workflow_image }}" alt="Workflow Diagram" style="max-width:100%; height:auto;">
+    </a>
+    <p style="font-size: 0.9em; margin-top: 4px;">
+        (Click the diagram to view full size)
+    </p>
+</div>
+{% endif %}
+
+
+{% if data.steps %}
+<section class="section">
+  <h2>Detailed Steps</h2>
+  <ol class="steps">
+    {% for s in data.steps %}
+      <li><strong>{{ s.title }}</strong><br>{{ s.desc }}</li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+  {% for sec in data.sections %}
+  <section class="section">
+    <h2>{{ sec.name }}</h2>
+
+    {% if sec.type == "kv" %}
+      <dl class="kv">
+        {% for f in sec.fields %}
+          <dt>{{ f.label }}</dt>
+          <dd>{{ f.value }}</dd>
+        {% endfor %}
+      </dl>
+
+    {% elif sec.type == "table" %}
+      {% if sec.name == "Mapping" %}
+        <div class="table-wrap">
+          <table class="mapping2">
+            <colgroup>
+              <col style="width:50%">
+              <col style="width:50%">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Source Structure</th>
+                <th>Target Structure</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sec.rows %}
+              <tr>
+                <td>{{ row['Source Structure'] }}</td>
+                <td>{{ row['Target Structure'] }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                {% for col in sec.columns %}<th>{{ col }}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sec.rows %}
+              <tr>
+                {% for col in sec.columns %}<td>{{ row[col] }}</td>{% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    {% endif %}
+  </section>
+  {% endfor %}
+
+  <footer class="doc-footer">
+    <p><small>Generated offline.</small></p>
+  </footer>
+</body>
+</html>

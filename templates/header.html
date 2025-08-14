@@ -1,0 +1,29 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; font-size: 10px; color: #444; margin: 0 6mm; }
+  .row { display: flex; justify-content: space-between; align-items: center; }
+  .left { display:flex; align-items:center; gap:8px; }
+  img.logo { height: 14px; }
+  .title { font-weight:600; }
+</style>
+</head><body onload="setDate()">
+  <div class="row">
+    <div class="left">
+      <!-- If your logo wasn't loading, keep this or replace src with an absolute file URI -->
+      <img class="logo" src="file:///" alt="">
+      <span class="title">Lobster Profile Documentation</span>
+    </div>
+    <div class="right"><span id="hdr-date"></span></div>
+  </div>
+<script>
+  function setDate(){
+    // Simple client-side date; avoids relying on wkhtml placeholders
+    try {
+      const d = new Date();
+      document.getElementById('hdr-date').textContent =
+        d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
+    } catch(e) {}
+  }
+</script>
+</body></html>

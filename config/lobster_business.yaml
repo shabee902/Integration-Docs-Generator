@@ -1,0 +1,27 @@
+title: "Lobster Profile: {{name}} — Business Documentation"
+
+sections:
+  Profile Purpose:
+    Overview: "concat('The profile ', /datawizardprofile/@name, ' handles the import of customer order data into the internal Order Interface system via Lobster DataWizard. It transforms incoming XML order data from the client into the standardized internal format. This ensures data consistency, correct field mapping, and smooth integration with downstream processing systems.')"
+
+  Input Data:
+    Transport: "concat('API (', translate(/datawizardprofile/responsesettings/responseunits/unit_http/http_method/text(), 'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'), ')')"
+    Payload Type: "/datawizardprofile/agent/mimetype/text()"
+    Endpoint (suffix): "/datawizardprofile/agent/url/text()"
+
+  Mapping:
+    _list: "/datawizardprofile/dataproperties/structuredefinition/mappinginformation/mappingentry"
+    columns:
+      Source Structure: "@source"
+      Target Structure: "@destination"
+
+  Output Data:
+    Forwarding Type: "'Internal profile handoff'"
+    Success Profile: "/datawizardprofile/responsesettings/responseunits/unit_http/forward_profile/text()"
+    Error Profile: "/datawizardprofile/responsesettings/responseunits/unit_http/error_profile/text()"
+
+  Trigger:
+    Mode: "'Event-based (HTTP request received)'"
+    Method Allowed: "concat('POST: ', /datawizardprofile/agent/accept_post/text())"
+    API Enabled: "/datawizardprofile/agent/enable_api/text()"
+    Incoming URL: "/datawizardprofile/agent/url/text()"

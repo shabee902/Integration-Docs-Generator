@@ -1,0 +1,81 @@
+:root {
+  --text:#1e1f23;
+  --muted:#6b7280;
+  --line:#e5e7eb;
+  --accent:#0ea5e9;
+  --bg:#ffffff;
+  --table-stripe:#fafafa;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--text); }
+body { font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 22mm 16mm; line-height: 1.55; }
+
+.cover { border-bottom: 2px solid var(--line); padding-bottom: 14px; margin-bottom: 18px; }
+.brand { display:flex; align-items:center; gap:10px; color: var(--muted); }
+.brand img { height:18px; }
+.brand-text { font-size:12px; letter-spacing:.04em; text-transform: uppercase; }
+h1 {
+  font-size: 22px;            /* a bit smaller for very long names */
+  line-height: 1.25;
+  margin: 8px 0 6px;
+  word-break: break-word;
+  overflow-wrap: anywhere;     /* allows breaks inside long tokens */
+  hyphens: auto;
+}
+.meta { font-size: 12px; color: var(--muted); display:flex; gap:18px; flex-wrap:wrap; }
+
+.section { margin: 18px 0 8px; page-break-inside: avoid; }
+h2 { font-size: 17px; margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+
+.kv { display:grid; grid-template-columns: 220px 1fr; gap:8px 16px; }
+.kv dt { font-weight:600; color:#111827; }
+.kv dd { margin:0 0 6px 0; color:#1f2937; word-break: break-word; }
+
+.table-wrap { overflow: hidden; border:1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width:100%; font-size: 13px; }
+th, td { padding: 8px 10px; vertical-align: top; }
+thead th { text-align:left; background: #f3f4f6; border-bottom:1px solid var(--line); }
+tbody tr:nth-child(odd) { background: var(--table-stripe); }
+tbody td { border-top: 1px solid var(--line); }
+td, th { word-break: break-word; }
+
+.doc-footer { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 8px; color: var(--muted); }
+
+/* Mapping table (2 columns, Excel-like) */
+.mapping2 {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;         /* keeps columns at 50/50 */
+  font-size: 12px;
+}
+.mapping2 th, .mapping2 td {
+  border: 1px solid #d1d5db;   /* light grid */
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.mapping2 thead th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+.mapping2 td {
+  word-break: break-word;
+  overflow-wrap: anywhere;     /* wrap long paths like ReturnOrder#1_choice_1_val */
+}
+
+.flow-wrap { border:1px solid #e5e7eb; border-radius:8px; padding:8px; background:#fff; }
+.flow { width:100%; height:auto; display:block; }
+.steps { margin: 6px 0 0 18px; }
+.steps li { margin: 6px 0; }
+
+.workflow img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto; /* centers the image */
+}
+
+/* (optional) give the page a touch more width */
+body { margin: 20mm 12mm; }    /* adjust if you want even more room */
+
+@page { size: A4; margin: 20mm 12mm 18mm 12mm; }

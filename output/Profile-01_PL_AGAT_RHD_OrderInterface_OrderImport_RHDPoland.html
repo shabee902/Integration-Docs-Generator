@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lobster Profile: 01_PL_AGAT_RHD_OrderInterface_OrderImport_RHDPoland — Business Documentation</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <div class="cover">
+    <div class="brand">
+      <img src="templates/logo.png" alt="Logo">
+      <div class="brand-text">Lobster Profile Docs</div>
+    </div>
+    <h1>Lobster Profile: 01_&ZeroWidthSpace;PL_&ZeroWidthSpace;AGAT_&ZeroWidthSpace;RHD_&ZeroWidthSpace;OrderInterface_&ZeroWidthSpace;OrderImport_&ZeroWidthSpace;RHDPoland — Business Documentation</h1>
+    <div class="meta">
+      <div><strong>Generated:</strong> 2025-08-14 13:17</div>
+      <div><strong>Source:</strong> Profile-01_PL_AGAT_RHD_OrderInterface_OrderImport_RHDPoland.xml</div>
+    </div>
+  </div>
+
+<h2>Workflow</h2>
+<div class="workflow">
+    <a href="images/Profile-01_PL_AGAT_RHD_OrderInterface_OrderImport_RHDPoland_flow.svg" target="_blank">
+        <img src="images/Profile-01_PL_AGAT_RHD_OrderInterface_OrderImport_RHDPoland_flow.svg" alt="Workflow Diagram" style="max-width:100%; height:auto;">
+    </a>
+    <p style="font-size: 0.9em; margin-top: 4px;">
+        (Click the diagram to view full size)
+    </p>
+</div>
+
+
+
+
+<section class="section">
+  <h2>Detailed Steps</h2>
+  <ol class="steps">
+    
+      <li><strong>Trigger</strong><br>Event-based HTTP POST to `AGAT/Order` with `application/xml` payload.</li>
+    
+      <li><strong>Parse XML</strong><br>Read and validate structure (record tag, encoding, namespaces).</li>
+    
+      <li><strong>Validate Data</strong><br>Check required fields and formats; reject incomplete or malformed payloads.</li>
+    
+      <li><strong>Map Fields</strong><br>Apply mapping rules from source → target (89 pairs discovered).</li>
+    
+      <li><strong>Forward / Handoff</strong><br>On success, hand off to `02_PL_AGAT_RHD_OrderInterface_StatusResponse_RHDPoland`.</li>
+    
+      <li><strong>Error Handling</strong><br>On error, route to `02_PL_AGAT_RHD_OrderInterface_StatusResponse_RHDPoland` for diagnostics and notifications.</li>
+    
+  </ol>
+</section>
+
+
+  
+  <section class="section">
+    <h2>Profile Purpose</h2>
+
+    
+      <dl class="kv">
+        
+          <dt>Overview</dt>
+          <dd>This profile receives POST requests at AGAT/Order and maps the incoming data to the internal format for downstream processing.</dd>
+        
+      </dl>
+
+    
+  </section>
+  
+  <section class="section">
+    <h2>Input Data</h2>
+
+    
+      <dl class="kv">
+        
+          <dt>Transport</dt>
+          <dd>API (POST)</dd>
+        
+          <dt>Payload Type</dt>
+          <dd>application/xml</dd>
+        
+          <dt>Endpoint (suffix)</dt>
+          <dd>AGAT/Order</dd>
+        
+      </dl>
+
+    
+  </section>
+  
+  <section class="section">
+    <h2>Mapping</h2>
+
+    
+      
+        <div class="table-wrap">
+          <table class="mapping2">
+            <colgroup>
+              <col style="width:50%">
+              <col style="width:50%">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Source Structure</th>
+                <th>Target Structure</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>OrderNumber</td>
+                <td>OrderNumber</td>
+              </tr>
+              
+              <tr>
+                <td>Remark</td>
+                <td>Remark</td>
+              </tr>
+              
+              <tr>
+                <td>AmountValue-2</td>
+                <td>AmountValue#2</td>
+              </tr>
+              
+              <tr>
+                <td>AmountValue-3</td>
+                <td>AmountValue#3</td>
+              </tr>
+              
+              <tr>
+                <td>FreightTerm</td>
+                <td>FreightTerm</td>
+              </tr>
+              
+              <tr>
+                <td>Salutation-1</td>
+                <td>Salutation#1</td>
+              </tr>
+              
+              <tr>
+                <td>ServiceType</td>
+                <td>ServiceType</td>
+              </tr>
+              
+              <tr>
+                <td>SequenceNumber</td>
+                <td>SequenceNumber</td>
+              </tr>
+              
+              <tr>
+                <td>Street</td>
+                <td>Street</td>
+              </tr>
+              
+              <tr>
+                <td>DesiredDate</td>
+                <td>DesiredDate</td>
+              </tr>
+              
+              <tr>
+                <td>ReturnOrder-1_choice_1_val</td>
+                <td>ReturnOrder#1_choice_1_val</td>
+              </tr>
+              
+              <tr>
+                <td>AmountValue-1</td>
+                <td>AmountValue#1</td>
+              </tr>
+              
+              <tr>
+                <td>Fax-1</td>
+                <td>Fax#1</td>
+              </tr>
+              
+              <tr>
+                <td>PostalCode-1</td>
+                <td>PostalCode#1</td>
+              </tr>
+              
+              <tr>
+                <td>LocationCode</td>
+                <td>LocationCode</td>
+              </tr>
+              
+              <tr>
+                <td>PackageQuantity</td>
+                <td>PackageQuantity</td>
+              </tr>
+              
+              <tr>
+                <td>Volume</td>
+                <td>Volume</td>
+              </tr>
+              
+              <tr>
+                <td>SenderAbbreviation</td>
+                <td>SenderAbbreviation</td>
+              </tr>
+              
+              <tr>
+                <td>Country</td>
+                <td>Country</td>
+              </tr>
+              
+              <tr>
+                <td>TransmissionCommand</td>
+                <td>TransmissionCommand</td>
+              </tr>
+              
+              <tr>
+                <td>LocationType-2</td>
+                <td>LocationType#2</td>
+              </tr>
+              
+              <tr>
+                <td>LocationType-1</td>
+                <td>LocationType#1</td>
+              </tr>
+              
+              <tr>
+                <td>HouseNumber</td>
+                <td>HouseNumber</td>
+              </tr>
+              
+              <tr>
+                <td>Street-1</td>
+                <td>Street#1</td>
+              </tr>
+              
+              <tr>
+                <td>ArticleWeight</td>
+                <td>ArticleWeight</td>
+              </tr>
+              
+              <tr>
+                <td>Salutation</td>
+                <td>Salutation</td>
+              </tr>
+              
+              <tr>
+                <td>HouseNumber-1</td>
+                <td>HouseNumber#1</td>
+              </tr>
+              
+              <tr>
+                <td>ItemBarcode_val</td>
+                <td>ItemBarcode_val</td>
+              </tr>
+              
+              <tr>
+                <td>Phone3-1</td>
+                <td>Phone3#1</td>
+              </tr>
+              
+              <tr>
+                <td>OrderNumber2</td>
+                <td>OrderNumber2</td>
+              </tr>
+              
+              <tr>
+                <td>MessageDate</td>
+                <td>MessageDate</td>
+              </tr>
+              
+              <tr>
+                <td>OrderNumber3</td>
+                <td>OrderNumber3</td>
+              </tr>
+              
+              <tr>
+                <td>FirstName</td>
+                <td>FirstName</td>
+              </tr>
+              
+              <tr>
+                <td>City-1</td>
+                <td>City#1</td>
+              </tr>
+              
+              <tr>
+                <td>EMail</td>
+                <td>EMail</td>
+              </tr>
+              
+              <tr>
+                <td>AmountValue</td>
+                <td>AmountValue</td>
+              </tr>
+              
+              <tr>
+                <td>ServiceOnly-1_choice_1_val</td>
+                <td>ServiceOnly#1_choice_1_val</td>
+              </tr>
+              
+              <tr>
+                <td>AttributeKey</td>
+                <td>AttributeKey</td>
+              </tr>
+              
+              <tr>
+                <td>Country-1</td>
+                <td>Country#1</td>
+              </tr>
+              
+              <tr>
+                <td>LatestTime</td>
+                <td>LatestTime</td>
+              </tr>
+              
+              <tr>
+                <td>OrderInterfaceVersion_attr</td>
+                <td>OrderInterfaceVersion_attr</td>
+              </tr>
+              
+              <tr>
+                <td>OrderCreation</td>
+                <td>OrderCreation</td>
+              </tr>
+              
+              <tr>
+                <td>AmountCurrency-2</td>
+                <td>AmountCurrency#2</td>
+              </tr>
+              
+              <tr>
+                <td>AttributeValue</td>
+                <td>AttributeValue</td>
+              </tr>
+              
+              <tr>
+                <td>AmountCurrency-3</td>
+                <td>AmountCurrency#3</td>
+              </tr>
+              
+              <tr>
+                <td>Remark-1</td>
+                <td>Remark#1</td>
+              </tr>
+              
+              <tr>
+                <td>AmountCurrency-1</td>
+                <td>AmountCurrency#1</td>
+              </tr>
+              
+              <tr>
+                <td>Remark-2</td>
+                <td>Remark#2</td>
+              </tr>
+              
+              <tr>
+                <td>Name</td>
+                <td>Name</td>
+              </tr>
+              
+              <tr>
+                <td>AdditionalAddressLine-1</td>
+                <td>AdditionalAddressLine#1</td>
+              </tr>
+              
+              <tr>
+                <td>CustomerNumber</td>
+                <td>CustomerNumber</td>
+              </tr>
+              
+              <tr>
+                <td>ArticleNumber</td>
+                <td>ArticleNumber</td>
+              </tr>
+              
+              <tr>
+                <td>TransportType</td>
+                <td>TransportType</td>
+              </tr>
+              
+              <tr>
+                <td>Client</td>
+                <td>Client</td>
+              </tr>
+              
+              <tr>
+                <td>Phone2-1</td>
+                <td>Phone2#1</td>
+              </tr>
+              
+              <tr>
+                <td>City</td>
+                <td>City</td>
+              </tr>
+              
+              <tr>
+                <td>PositionNumber</td>
+                <td>PositionNumber</td>
+              </tr>
+              
+              <tr>
+                <td>Weight</td>
+                <td>Weight</td>
+              </tr>
+              
+              <tr>
+                <td>ArticleDescription</td>
+                <td>ArticleDescription</td>
+              </tr>
+              
+              <tr>
+                <td>PostalCode</td>
+                <td>PostalCode</td>
+              </tr>
+              
+              <tr>
+                <td>InjectionBordereau</td>
+                <td>InjectionBordereau</td>
+              </tr>
+              
+              <tr>
+                <td>AdditionalAddressLine</td>
+                <td>AdditionalAddressLine</td>
+              </tr>
+              
+              <tr>
+                <td>Phone1</td>
+                <td>Phone1</td>
+              </tr>
+              
+              <tr>
+                <td>Phone3</td>
+                <td>Phone3</td>
+              </tr>
+              
+              <tr>
+                <td>Phone2</td>
+                <td>Phone2</td>
+              </tr>
+              
+              <tr>
+                <td>Floor-1</td>
+                <td>Floor#1</td>
+              </tr>
+              
+              <tr>
+                <td>FirstName-1</td>
+                <td>FirstName#1</td>
+              </tr>
+              
+              <tr>
+                <td>Quality</td>
+                <td>Quality</td>
+              </tr>
+              
+              <tr>
+                <td>LocationCode-1</td>
+                <td>LocationCode#1</td>
+              </tr>
+              
+              <tr>
+                <td>FixedDate</td>
+                <td>FixedDate</td>
+              </tr>
+              
+              <tr>
+                <td>LocationCode-2</td>
+                <td>LocationCode#2</td>
+              </tr>
+              
+              <tr>
+                <td>Phone1-1</td>
+                <td>Phone1#1</td>
+              </tr>
+              
+              <tr>
+                <td>Floor</td>
+                <td>Floor</td>
+              </tr>
+              
+              <tr>
+                <td>InjectionDate</td>
+                <td>InjectionDate</td>
+              </tr>
+              
+              <tr>
+                <td>ReferenceOrderNumber</td>
+                <td>ReferenceOrderNumber</td>
+              </tr>
+              
+              <tr>
+                <td>Title</td>
+                <td>Title</td>
+              </tr>
+              
+              <tr>
+                <td>Quantity</td>
+                <td>Quantity</td>
+              </tr>
+              
+              <tr>
+                <td>Quantity-1</td>
+                <td>Quantity#1</td>
+              </tr>
+              
+              <tr>
+                <td>Title-1</td>
+                <td>Title#1</td>
+              </tr>
+              
+              <tr>
+                <td>ArticleVolume</td>
+                <td>ArticleVolume</td>
+              </tr>
+              
+              <tr>
+                <td>PositionNumber-1</td>
+                <td>PositionNumber#1</td>
+              </tr>
+              
+              <tr>
+                <td>EMail-1</td>
+                <td>EMail#1</td>
+              </tr>
+              
+              <tr>
+                <td>AmountCurrency</td>
+                <td>AmountCurrency</td>
+              </tr>
+              
+              <tr>
+                <td>EarliestTime</td>
+                <td>EarliestTime</td>
+              </tr>
+              
+              <tr>
+                <td>Name-1</td>
+                <td>Name#1</td>
+              </tr>
+              
+              <tr>
+                <td>Fax</td>
+                <td>Fax</td>
+              </tr>
+              
+              <tr>
+                <td>LocationType</td>
+                <td>LocationType</td>
+              </tr>
+              
+              <tr>
+                <td>Hold</td>
+                <td>Hold</td>
+              </tr>
+              
+              <tr>
+                <td>MessageId</td>
+                <td>MessageId</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+      
+    
+  </section>
+  
+  <section class="section">
+    <h2>Output Data</h2>
+
+    
+      <dl class="kv">
+        
+          <dt>Forwarding Type</dt>
+          <dd>Internal profile handoff</dd>
+        
+          <dt>Success Profile</dt>
+          <dd>02_PL_AGAT_RHD_OrderInterface_StatusResponse_RHDPoland</dd>
+        
+          <dt>Error Profile</dt>
+          <dd>02_PL_AGAT_RHD_OrderInterface_StatusResponse_RHDPoland</dd>
+        
+      </dl>
+
+    
+  </section>
+  
+  <section class="section">
+    <h2>Trigger</h2>
+
+    
+      <dl class="kv">
+        
+          <dt>Mode</dt>
+          <dd>Event-based (HTTP request received)</dd>
+        
+          <dt>Method Allowed</dt>
+          <dd>POST: true</dd>
+        
+          <dt>API Enabled</dt>
+          <dd>true</dd>
+        
+          <dt>Incoming URL</dt>
+          <dd>AGAT/Order</dd>
+        
+      </dl>
+
+    
+  </section>
+  
+
+  <footer class="doc-footer">
+    <p><small>Generated offline.</small></p>
+  </footer>
+</body>
+</html>
