@@ -1,27 +1,41 @@
-title: "Lobster Profile: {{name}} — Business Documentation"
+# Human-friendly title; {{name}} is replaced by the profile's @name if present
+title: "Lobster Profile Documentation — {{name}}"
 
 sections:
+
+  # We still insert a dynamic "Profile Purpose" from Processor.py, but
+  # leaving this here allows you to keep a manual override if you ever want it.
+  # If you don’t want a duplicate, Processor.py already removes a static
+  # "Profile Purpose" section before inserting the dynamic one.
   Profile Purpose:
-    Overview: "concat('The profile ', /datawizardprofile/@name, ' handles the import of customer order data into the internal Order Interface system via Lobster DataWizard. It transforms incoming XML order data from the client into the standardized internal format. This ensures data consistency, correct field mapping, and smooth integration with downstream processing systems.')"
+    Overview: ""
 
   Input Data:
-    Transport: "concat('API (', translate(/datawizardprofile/responsesettings/responseunits/unit_http/http_method/text(), 'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'), ')')"
-    Payload Type: "/datawizardprofile/agent/mimetype/text()"
-    Endpoint (suffix): "/datawizardprofile/agent/url/text()"
+    Endpoint URL: "/datawizardprofile/agent/url/text()"
+    HTTP Method: "/datawizardprofile/agent/http_method/text()"
+    MIME Type: "/datawizardprofile/agent/mime_type/text()"
+    Content Type: "/datawizardprofile/agent/content_type/text()"
+    Accept POST: "/datawizardprofile/agent/accept_post/text()"
+    API Enabled: "/datawizardprofile/agent/enable_api/text()"
 
+  # Enriched mapping with plain-language “How it’s calculated”
   Mapping:
-    _list: "/datawizardprofile/dataproperties/structuredefinition/mappinginformation/mappingentry"
-    columns:
-      Source Structure: "@source"
-      Target Structure: "@destination"
+    _auto: "with_formulas"
 
   Output Data:
-    Forwarding Type: "'Internal profile handoff'"
     Success Profile: "/datawizardprofile/responsesettings/responseunits/unit_http/forward_profile/text()"
     Error Profile: "/datawizardprofile/responsesettings/responseunits/unit_http/error_profile/text()"
+    Exception Profile: "/datawizardprofile/dataproperties/exception_profile/text()"
+    Error Recipient: "/datawizardprofile/dataproperties/error_recipient/text()"
 
   Trigger:
-    Mode: "'Event-based (HTTP request received)'"
-    Method Allowed: "concat('POST: ', /datawizardprofile/agent/accept_post/text())"
-    API Enabled: "/datawizardprofile/agent/enable_api/text()"
-    Incoming URL: "/datawizardprofile/agent/url/text()"
+    Profile Type: "/datawizardprofile/type/text()"
+    Scheduler: "/datawizardprofile/scheduler/cron/text()"
+    Enabled: "/datawizardprofile/enabled/text()"
+
+  # Optional small summary table of profile metadata (example keys used by some exports)
+  Profile Metadata:
+    Profile Name: "/datawizardprofile/@name"
+    Version: "/datawizardprofile/version/text()"
+    Business Unit: "//businessunit/text()"
+    Custom Class: "//custom_class/text()"

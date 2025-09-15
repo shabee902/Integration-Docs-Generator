@@ -9,8 +9,7 @@
 <body>
   <div class="cover">
     <div class="brand">
-      <img src="templates/logo.png" alt="Logo">
-      <div class="brand-text">Lobster Profile Docs</div>
+      <img src="templates/logo.png" alt="">
     </div>
     <h1>{{ data.title | replace('_','_&ZeroWidthSpace;') | safe }}</h1>
     <div class="meta">
@@ -18,29 +17,24 @@
       <div><strong>Source:</strong> {{ data.source_file }}</div>
     </div>
   </div>
-{% if data.workflow_image %}
-<h2>Workflow</h2>
-<div class="workflow">
-    <a href="{{ data.workflow_image }}" target="_blank">
-        <img src="{{ data.workflow_image }}" alt="Workflow Diagram" style="max-width:100%; height:auto;">
-    </a>
-    <p style="font-size: 0.9em; margin-top: 4px;">
-        (Click the diagram to view full size)
-    </p>
-</div>
-{% endif %}
 
+  {% if data.workflow_link %}
+  <h2>Workflow</h2>
+  <p class="workflow-link">
+    <a href="{{ data.workflow_link }}" target="_blank">Open full-size workflow diagram</a>
+  </p>
+  {% endif %}
 
-{% if data.steps %}
-<section class="section">
-  <h2>Detailed Steps</h2>
-  <ol class="steps">
-    {% for s in data.steps %}
-      <li><strong>{{ s.title }}</strong><br>{{ s.desc }}</li>
-    {% endfor %}
-  </ol>
-</section>
-{% endif %}
+  {% if data.steps %}
+  <section class="section">
+    <h2>Detailed Steps</h2>
+    <ol class="steps">
+      {% for s in data.steps %}
+        <li><strong>{{ s.title }}</strong><br>{{ s.desc }}</li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endif %}
 
   {% for sec in data.sections %}
   <section class="section">
@@ -55,53 +49,67 @@
       </dl>
 
     {% elif sec.type == "table" %}
-      {% if sec.name == "Mapping" %}
-        <div class="table-wrap">
-          <table class="mapping2">
-            <colgroup>
-              <col style="width:50%">
-              <col style="width:50%">
-            </colgroup>
-            <thead>
-              <tr>
-                <th>Source Structure</th>
-                <th>Target Structure</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in sec.rows %}
-              <tr>
-                <td>{{ row['Source Structure'] }}</td>
-                <td>{{ row['Target Structure'] }}</td>
-              </tr>
+      <div class="table-wrap">
+        <table class="mapping2">
+          <thead>
+            <tr>
+              {% for col in sec.columns %}<th>{{ col }}</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in sec.rows %}
+            <tr>
+              {% for col in sec.columns %}
+                {% if col == "How it’s calculated" %}
+                  {% set raw = (row[col] or "").strip() %}
+                  {% set parts = raw.split(":", 1) %}
+                  {% set is_copy = raw and raw.lower().startswith('copied as is') %}
+                  <td class="how{{ ' as-is' if is_copy }}">
+                    {% if is_copy %}
+                      <div class="how-plain">{{ raw }}</div>
+                    {% elif parts|length == 2 %}
+                      <div class="how-head"><strong>{{ parts[0] }}</strong></div>
+
+                      {# Split on commas that are NOT inside single quotes #}
+                      {% set rest = parts[1].strip() %}
+                      {% set ns = namespace(buf='', inq=false, items=[]) %}
+                      {% for ch in rest %}
+                        {% if ch == "'" %}
+                          {% set ns.inq = not ns.inq %}
+                          {% set ns.buf = ns.buf + ch %}
+                        {% elif ch == "," and not ns.inq %}
+                          {% set ns.items = ns.items + [ns.buf.strip().rstrip(".")] %}
+                          {% set ns.buf = "" %}
+                        {% else %}
+                          {% set ns.buf = ns.buf + ch %}
+                        {% endif %}
+                      {% endfor %}
+                      {% if ns.buf.strip() %}
+                        {% set ns.items = ns.items + [ns.buf.strip().rstrip(".")] %}
+                      {% endif %}
+
+                      {% if ns.items %}
+                        <ul class="how-list{{ ' two-col' if ns.items|length > 6 }}">
+                          {% for it in ns.items %}
+                            {% if it %}<li>{{ it }}</li>{% endif %}
+                          {% endfor %}
+                        </ul>
+                      {% endif %}
+                    {% else %}
+                      <div class="how-plain">{{ raw }}</div>
+                    {% endif %}
+                  </td>
+                {% else %}
+                  <td>{{ row[col] }}</td>
+                {% endif %}
               {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                {% for col in sec.columns %}<th>{{ col }}</th>{% endfor %}
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in sec.rows %}
-              <tr>
-                {% for col in sec.columns %}<td>{{ row[col] }}</td>{% endfor %}
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     {% endif %}
   </section>
   {% endfor %}
-
-  <footer class="doc-footer">
-    <p><small>Generated offline.</small></p>
-  </footer>
 </body>
 </html>

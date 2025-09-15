@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import argparse, sys, subprocess, os, textwrap
+import argparse, sys, subprocess, os, textwrap, base64
 from pathlib import Path
 from datetime import datetime
 import xml.etree.ElementTree as ET
@@ -46,7 +46,6 @@ def load_xml(path: Path):
     if HAVE_LXML:
         parser = LET.XMLParser(recover=True, remove_blank_text=True, encoding="utf-8")
         return LET.fromstring(data, parser=parser)
-    # fallback (limited): no XPath
     return ET.fromstring(data.decode("utf-8", errors="ignore"))
 
 def ntext(node) -> str:
@@ -57,13 +56,11 @@ def ntext(node) -> str:
     return (node.text or "").strip()
 
 def eval_xpath(root, expr: str):
-    """Best-effort XPath evaluation. Full XPath if lxml is present, else minimal path walk."""
     if HAVE_LXML:
         try:
             return root.xpath(expr)
         except Exception:
             return []
-    # minimal path walk without predicates/attributes
     try:
         parts = [p for p in expr.strip("/").split("/") if p]
         cur = root
@@ -124,6 +121,270 @@ def section_has_data(sec):
         return len(sec.get("rows", [])) > 0
     return True
 
+
+# ---------- Helpers for formulas ----------
+def _t(node):
+    return "".join(node.itertext()).strip() if hasattr(node, "itertext") else (str(node) if node else "")
+
+def _first_text(node_list):
+    if not node_list:
+        return ""
+    v = node_list[0]
+    return _t(v)
+
+def _b64_or_text(s: str) -> str:
+    if not s or not isinstance(s, str):
+        return s or ""
+    t = s.strip()
+    if len(t) % 4 == 0 and all(c.isalnum() or c in "+/=\n\r" for c in t):
+        try:
+            dec = base64.b64decode(t).decode("utf-8", errors="ignore")
+            return dec if dec.strip() else s
+        except Exception:
+            return s
+    return s
+
+def explain_rule(rule_name: str, params: list[str]) -> str:
+    rn = (rule_name or "").strip().lower()
+    if rn in ("copy", "identity", "") and not params:
+        return "Copied as is from source."
+    if rn in ("default", "const", "constant"):
+        return f"Uses a fixed value: {params[0]!r}" if params else "Uses a fixed value."
+    if rn in ("concat", "concatenate"):
+        return f"Concatenation of parts: {', '.join(params)}."
+    if rn in ("substr", "substring"):
+        if len(params) >= 3:
+            return f"Substring of source starting at {params[1]} with length {params[2]}."
+        return "Substring of source."
+    if rn in ("replace", "regexreplace", "regex_replace"):
+        if len(params) >= 3:
+            return f"Replace {params[1]!r} with {params[2]!r} in source."
+        return "Text replacement on source."
+    if rn in ("upper", "uppercase"):
+        return "Uppercased from source."
+    if rn in ("lower", "lowercase"):
+        return "Lowercased from source."
+    if rn in ("trim", "strip"):
+        return "Trimmed whitespace from source."
+    if rn in ("sum", "add"):
+        return f"Sum of {', '.join(params)}."
+    if rn in ("multiply", "mul"):
+        return f"Product of {', '.join(params)}."
+    if rn in ("round", "ceil", "floor"):
+        return f"{rule_name.capitalize()} applied to numeric source."
+    if rn in ("dateformat", "date_format", "formatdate"):
+        if len(params) >= 3:
+            return f"Date reformatted from {params[1]} to {params[2]}."
+        return "Date reformatted."
+    if rn in ("if", "case", "when"):
+        return "Conditional mapping based on business rules."
+    if rn in ("lookup", "map", "dictionary"):
+        return "Value mapped via lookup table."
+    if rn in ("boolean", "toboolean", "bool"):
+        return "Converted to boolean from source."
+    return f"Calculated using function '{rule_name}'" + (f" (params: {', '.join(params)})" if params else "")
+
+
+# ---------- NEW: parse formulas from <inputtree> ----------
+# ---------- NEW: build formula index (prefers outputtree, falls back to inputtree) ----------
+def build_formula_index(root):
+    """
+    Returns dict { target_field_name: human_explanation }
+    Reads <outputtree>//field[@name]/filter[...] first (this is where your formulas are),
+    and if nothing found for a field, falls back to <inputtree>//field.
+    """
+    def collect_from_tree(tree_xpath):
+        idx = {}
+        if not HAVE_LXML:
+            return idx
+        try:
+            fields = root.xpath(f"{tree_xpath}//field")
+        except Exception:
+            fields = []
+
+        for f in fields or []:
+            fname = f.get("name") or ""
+            if not fname:
+                continue
+
+            # Gather all <filter> blocks for this field
+            try:
+                filters = f.xpath("./filter")
+            except Exception:
+                filters = []
+
+            parts = []
+            for flt in filters:
+                desc = flt.get("description") or ""
+                # ordered args: <a>, <b>, <c>, ...
+                childs = [c for c in flt if hasattr(c, "tag")]
+                childs.sort(key=lambda n: n.tag if hasattr(n, "tag") else "")
+                args = []
+                for ch in childs:
+                    ch_type = (ch.get("type") or "").strip().lower()
+                    ch_fc   = (ch.get("fieldconstant") or "").strip()
+                    try:
+                        vnodes = ch.xpath("./value/text()")
+                        b64val = vnodes[0] if isinstance(vnodes, list) and vnodes else ""
+                    except Exception:
+                        b64val = ""
+                    # decode base64 if present
+                    val = _b64_or_text(b64val)
+
+                    if ch_type in ("linked field", "linked_field", "field", "source"):
+                        if ch_fc:
+                            args.append(f"field {ch_fc}")
+                        elif val:
+                            args.append(f"field {val}")
+                        else:
+                            args.append("linked field")
+                    elif ch_type in ("constant", "const", "fixed"):
+                        if val:
+                            args.append(f"constant {repr(val)}")
+                        elif ch_fc:
+                            args.append(f"constant {repr(ch_fc)}")
+                        else:
+                            args.append("constant")
+                    else:
+                        if val:
+                            args.append(f"{ch_type or 'value'} {repr(val)}")
+                        elif ch_fc:
+                            args.append(f"{ch_type or 'param'} {repr(ch_fc)}")
+                        else:
+                            args.append(ch_type or "param")
+
+                if desc:
+                    parts.append(f"{desc}: " + ", ".join(args) + "." if args else desc + ".")
+                elif args:
+                    parts.append("Calculated from: " + ", ".join(args) + ".")
+                else:
+                    parts.append("Calculated using configured filter.")
+
+            if parts:
+                idx[fname] = " ".join(parts)
+            else:
+                # Constants on field itself (rare, but keep)
+                fix = (f.get("fix_value") or "").strip()
+                if fix:
+                    idx[fname] = f"Uses a fixed value: {repr(_b64_or_text(fix))}."
+        return idx
+
+    # Prefer outputtree formulas
+    out_idx = collect_from_tree("//outputtree")
+    in_idx  = collect_from_tree("//inputtree")
+
+    # Merge (outputtree wins)
+    merged = dict(in_idx)
+    merged.update(out_idx)
+    return merged
+
+# ---------- Mapping extractor ----------
+def extract_mapping_with_formulas(root):
+    rows = []
+    if not HAVE_LXML:
+        return rows
+
+    entry_paths = [
+        "//structuredefinition/mappinginformation/mappingentry",
+        "//mappinginformation/mappingentry",
+        "//mappingentry"
+    ]
+    entries = []
+    for ep in entry_paths:
+        try:
+            entries = root.xpath(ep)
+            if entries:
+                break
+        except Exception:
+            pass
+    if not entries:
+        return rows
+
+    # Build formula index (from outputtree first, then inputtree)
+    formula_idx = build_formula_index(root)
+
+    def normalize(name: str) -> str:
+        if not name:
+            return ""
+        # strip common Lobster adornments so Name and Name#1 can match
+        n = name
+        if n.endswith("_val") or n.endswith("_attr"):
+            n = n.rsplit("_", 1)[0]
+        return n
+
+    for e in entries:
+        source = e.get("source") or e.get("from") or e.get("input") or e.get("src") or ""
+        target = e.get("destination") or e.get("target") or e.get("to") or e.get("output") or e.get("tgt") or ""
+        if not source:
+            for sp in ["./source", "./input", "./from", "./src"]:
+                try:
+                    v = e.xpath(sp)
+                    if v:
+                        source = _first_text(v) if isinstance(v, list) else str(v)
+                        break
+                except: pass
+        if not target:
+            for tp in ["./target", "./output", "./to", "./tgt"]:
+                try:
+                    v = e.xpath(tp)
+                    if v:
+                        target = _first_text(v) if isinstance(v, list) else str(v)
+                        break
+                except: pass
+
+        # rule / params (optional)
+        rule_name, params = "", []
+        for rp in ["./rule/@name", "./function/@name", "./mappingrule/@name", "./rule/name/text()"]:
+            try:
+                v = e.xpath(rp)
+                if v:
+                    rule_name = str(v[0]) if isinstance(v, list) else str(v)
+                    break
+            except: pass
+        if not rule_name:
+            for rt in ["./rule/text()", "./function/text()", "./mappingrule/text()"]:
+                try:
+                    v = e.xpath(rt)
+                    if v:
+                        rule_name = _t(v[0]) if isinstance(v, list) else str(v)
+                        break
+                except: pass
+        for pp in ["./rule/param/text()", "./params/param/text()", "./function/param/text()", "./mappingrule/param/text()"]:
+            try:
+                vals = e.xpath(pp)
+                if vals:
+                    for val in vals:
+                        txt = _t(val)
+                        if txt: params.append(txt)
+            except: pass
+        if not rule_name and source and target:
+            rule_name = "copy"
+
+        # Start with function-based explanation
+        formula = explain_rule(rule_name, params)
+
+        # Prefer formula from output/input tree by matching the TARGET field name
+        if target:
+            # try exact
+            if target in formula_idx:
+                formula = formula_idx[target]
+            else:
+                # relaxed match: strip suffixes (#1, _val, _attr) and try again
+                t_norm = normalize(target).split("#", 1)[0]
+                for key, expl in formula_idx.items():
+                    k_norm = normalize(key).split("#", 1)[0]
+                    if t_norm == k_norm:
+                        formula = expl
+                        break
+
+        rows.append({
+            "Source Structure": source or "(n/a)",
+            "Target Structure": target or "(n/a)",
+            "How it’s calculated": formula
+        })
+
+    return rows
+
 def apply_mapping(root, mapping):
     doc = {"title": mapping.get("title") or "Document", "sections": []}
     try:
@@ -136,6 +397,15 @@ def apply_mapping(root, mapping):
 
     sections = mapping.get("sections", {})
     for sec_name, spec in sections.items():
+        if isinstance(spec, dict) and sec_name.strip().lower() == "mapping" and spec.get("_auto") == "with_formulas":
+            rows = extract_mapping_with_formulas(root)
+            sec = {"name": "Mapping", "type": "table",
+                   "columns": ["Source Structure", "Target Structure", "How it’s calculated"],
+                   "rows": rows}
+            if section_has_data(sec):
+                doc["sections"].append(sec)
+            continue
+
         if isinstance(spec, dict) and "_list" in spec:
             list_expr = spec["_list"]
             columns = spec.get("columns", {})
@@ -186,42 +456,30 @@ def apply_mapping(root, mapping):
     return doc
 
 
-# ---------- Workflow (info, steps, diagram) ----------
+# ---------- Workflow + Profile Purpose ----------
 def _wrap_label(s: str, width: int = 26) -> str:
-    s = (s or "").replace("_", "_\u200b")  # allow breaks at underscores
+    s = (s or "").replace("_", "_\u200b")
     parts = textwrap.wrap(s, width=width)
     return "\n".join(parts) if parts else s
 
 def extract_workflow_info(root):
-    # Basic IO
     method = (xtext(root, "/datawizardprofile/responsesettings/responseunits/unit_http/http_method/text()")
               or xtext(root, "/datawizardprofile/agent/http_method/text()") or "POST").upper()
     url = xtext(root, "/datawizardprofile/agent/url/text()")
     mime = (xtext(root, "/datawizardprofile/agent/mime_type/text()")
             or xtext(root, "/datawizardprofile/agent/content_type/text()")
             or "application/xml")
-
-    # Mapping size
     mapping_pairs = xcount(root, "/datawizardprofile/dataproperties/structuredefinition/mappinginformation/mappingentry")
-
-    # Success / Error targets
     fwd = xtext(root, "/datawizardprofile/responsesettings/responseunits/unit_http/forward_profile/text()")
     err = xtext(root, "/datawizardprofile/responsesettings/responseunits/unit_http/error_profile/text()")
-
-    # Other error signals that mean "there IS an error path"
     exc_prof   = xtext(root, "/datawizardprofile/dataproperties/exception_profile/text()")
     wf_err     = xtext(root, "/datawizardprofile/dataproperties/wfErrorName/text()")
     err_mail   = xtext(root, "/datawizardprofile/dataproperties/error_recipient/text()")
-
     has_error = bool(err or exc_prof or wf_err or err_mail)
-
     return {
-        "method": method,
-        "url": url,
-        "mime": mime,
+        "method": method, "url": url, "mime": mime,
         "mapping_pairs": mapping_pairs,
-        "forward_profile": fwd,
-        "error_profile": err,
+        "forward_profile": fwd, "error_profile": err,
         "has_error": has_error,
     }
 
@@ -231,92 +489,62 @@ def build_steps(info):
                   "desc": f"Event-based HTTP {info['method']} to `{info['url']}` with `{info['mime']}` payload."
                           if info.get('url') else
                           f"Event-based HTTP {info['method']} with `{info['mime']}` payload."})
-    steps.append({"title":"Parse XML", "desc":"Read and validate structure (record tag, encoding, namespaces)."})
-    steps.append({"title":"Validate Data", "desc":"Check required fields and formats; reject incomplete or malformed payloads."})
-    steps.append({"title":"Map Fields", "desc": f"Apply mapping rules from source → target ({info.get('mapping_pairs',0)} pairs discovered)."})
+    steps.append({"title":"Parse XML", "desc":"Read and validate structure."})
+    steps.append({"title":"Validate Data", "desc":"Check required fields and formats."})
+    steps.append({"title":"Map Fields", "desc": f"Apply mapping rules ({info.get('mapping_pairs',0)} pairs)."})
     if info.get("forward_profile"):
         steps.append({"title":"Forward / Handoff", "desc": f"On success, hand off to `{info['forward_profile']}`."})
     if info.get("has_error"):
         steps.append({"title":"Error Handling",
-                      "desc": f"On error, route to `{info['error_profile']}` for diagnostics and notifications."
+                      "desc": f"On error, route to `{info['error_profile']}`."
                               if info.get("error_profile") else
-                              "On error, execute the configured exception workflow or notifications."})
+                              "On error, execute the configured exception workflow."})
     return steps
 
 def render_workflow_svg(info, outdir: Path, stem: str) -> str | None:
-    """Render the workflow as a bounded SVG via Graphviz so it always fits the page."""
     if not HAVE_GV:
         return None
     try:
-        import os
         from graphviz import Digraph
 
-        # Ensure Python sees Graphviz even if PATH wasn't inherited
-        gv_bin = r"C:\Program Files\Graphviz\bin"
-        os.environ["PATH"] = gv_bin + os.pathsep + os.environ.get("PATH", "")
+        # A4 width = 8.27in. With ~12mm side margins (0.47in each), safe content ≈ 7.3in.
+        # Use a slightly smaller cap so wkhtml/weasy never clip.
+        CONTENT_W_IN = 7.1
+        MAX_H_IN = 2.4
 
         g = Digraph("flow", format="svg")
-
-        # Layout tuned to fit A4 content width with your margins
         g.attr(rankdir="LR")
         g.attr(
             "graph",
             dpi="110",
-            ranksep="0.50",       # tighter gaps between ranks
-            nodesep="0.30",       # tighter gaps between nodes
-            margin="0.05",
-            size="5.8,2.2!"       # hard cap width x height (inches); "!" forces scale-to-fit
+            ranksep="0.45",
+            nodesep="0.30",
+            margin="0.04",
+            pad="0.04",
+            size=f"{CONTENT_W_IN},{MAX_H_IN}",  # bound the overall size (no "!" so it fits within)
+            ratio="compress"                    # squeeze horizontally if needed
         )
-        g.attr(
-            "node",
-            shape="box",
-            style="rounded",
-            fontsize="10",
-            fontname="Arial",
-            width="1.7",          # smaller minimum node size
-            height="0.55"
-        )
+        g.attr("node", shape="box", style="rounded", fontsize="10", fontname="Arial")
         g.attr("edge", arrowsize="0.6")
 
-        # Labels (wrapped so nodes don't stretch)
-        n0_label = (
-            f"HTTP {info['method']}\n{_wrap_label(info.get('url', ''), 22)}"
-            if info.get("url") else f"HTTP {info['method']}"
-        )
-        n2_label = (
-            f"Map Fields\n({info.get('mapping_pairs', 0)} pairs)"
-            if info.get("mapping_pairs") else "Map Fields"
-        )
-        n3_label = (
-            f"Forward → {_wrap_label(info.get('forward_profile', ''), 24)}"
-            if info.get("forward_profile") else "Forward"
-        )
-        nE_label = (
-            f"Error → {_wrap_label(info.get('error_profile', ''), 24)}"
-            if info.get("error_profile") else "Error"
-        )
+        n0_label = f"HTTP {info['method']}\n{_wrap_label(info.get('url',''), 22)}" if info.get("url") else f"HTTP {info['method']}"
+        n2_label = f"Map Fields\n({info.get('mapping_pairs', 0)} pairs)" if info.get("mapping_pairs") else "Map Fields"
+        n3_label = f"Forward → {_wrap_label(info.get('forward_profile',''), 24)}" if info.get("forward_profile") else "Forward"
+        nE_label = f"Error → {_wrap_label(info.get('error_profile',''), 24)}" if info.get("error_profile") else "Error"
 
-        # Nodes
         g.node("n0", n0_label)
         g.node("n1", "Parse XML")
         g.node("n2", n2_label)
         g.node("n3", n3_label)
-
         if info.get("has_error"):
-            nE_label = (
-                f"Error → {_wrap_label(info.get('error_profile',''), 24)}"
-                if info.get("error_profile") else "Error"
-            )
             g.node("nE", nE_label, color="#B91C1C", fontcolor="#B91C1C")
 
-        # Edges
         g.edge("n0", "n1", label=info.get("mime") or "payload")
         g.edge("n1", "n2")
         g.edge("n2", "n3")
         if info.get("has_error"):
             g.edge("n2", "nE", style="dashed", color="#B91C1C", label="on error")
 
-        # Write to output/images
         img_dir = outdir / "images"
         img_dir.mkdir(parents=True, exist_ok=True)
         filename = f"{stem}_flow"
@@ -324,11 +552,9 @@ def render_workflow_svg(info, outdir: Path, stem: str) -> str | None:
 
         svg_path = img_dir / f"{filename}.svg"
         return str(svg_path) if svg_path.exists() else None
-
     except Exception:
         return None
 
-# ---------- HTML/PDF ----------
 def render_html(env, data):
     template = env.get_template(HTML_TEMPLATE)
     return template.render(data=data, css_path=STYLE_FILE, generated=datetime.now().strftime("%Y-%m-%d %H:%M"))
@@ -341,19 +567,12 @@ def try_pdf_from_html(html_path: Path, pdf_path: Path, wkhtmltopdf: str) -> bool
     try:
         header = (Path("templates") / "header.html").resolve().as_uri()
         footer = (Path("templates") / "footer.html").resolve().as_uri()
-        args = [
-            wkhtmltopdf,
-            "--enable-local-file-access",
-            "--print-media-type",
-            "--margin-top", "20mm",
-            "--margin-bottom", "16mm",
-            "--header-html", header,
-            "--footer-html", footer,
-            str(html_path.resolve()),
-            str(pdf_path.resolve()),
-        ]
+        args = [wkhtmltopdf, "--enable-local-file-access", "--print-media-type",
+                "--margin-top","20mm","--margin-bottom","16mm",
+                "--header-html", header,"--footer-html", footer,
+                str(html_path.resolve()), str(pdf_path.resolve())]
         res = subprocess.run(args, capture_output=True, text=True)
-        return res.returncode == 0 and pdf_path.exists() and pdf_path.stat().st_size > 0
+        return res.returncode==0 and pdf_path.exists() and pdf_path.stat().st_size>0
     except Exception:
         return False
 
@@ -361,7 +580,7 @@ def try_weasyprint(html_path: Path, pdf_path: Path) -> bool:
     try:
         from weasyprint import HTML
         HTML(filename=str(html_path)).write_pdf(str(pdf_path))
-        return pdf_path.exists() and pdf_path.stat().st_size > 0
+        return pdf_path.exists() and pdf_path.stat().st_size>0
     except Exception:
         return False
 
@@ -372,93 +591,56 @@ def try_reportlab_text_only(html_path: Path, pdf_path: Path) -> bool:
         from reportlab.lib.units import mm
         txt = html_path.read_text(encoding="utf-8", errors="ignore")
         c = canvas.Canvas(str(pdf_path), pagesize=A4)
-        width, height = A4
-        x = 20 * mm
-        y = height - 20 * mm
+        width,height = A4; x=20*mm; y=height-20*mm
         for line in txt.splitlines():
-            if y < 20 * mm:
-                c.showPage(); y = height - 20 * mm
-            c.drawString(x, y, line[:120]); y -= 6 * mm
+            if y < 20*mm: c.showPage(); y=height-20*mm
+            c.drawString(x,y,line[:120]); y-=6*mm
         c.save(); return True
     except Exception:
         return False
 
 def xpath_bool(root, expr: str) -> bool:
-    if not HAVE_LXML:
-        return False
+    if not HAVE_LXML: return False
     try:
         vals = root.xpath(expr)
         if isinstance(vals, list):
-            return len(vals) > 0 and (str(vals[0]).strip() != "" or hasattr(vals[0], "tag"))
+            return len(vals)>0 and (str(vals[0]).strip()!="" or hasattr(vals[0],"tag"))
         return bool(vals)
     except Exception:
         return False
 
 def build_profile_purpose_section(root):
-    """
-    Returns a KV section dict like:
-    {"name": "Profile Purpose", "type": "kv", "fields": [{"label":"Overview","value":"..."}]}
-    """
-    # Signals
-    cc = xtext(root, "//custom_class/text()")
-    has_cc = xpath_bool(root, "//custom_class[text()]")  # any custom class
-    method = (xtext(root, "/datawizardprofile/responsesettings/responseunits/unit_http/http_method/text()")
-              or xtext(root, "/datawizardprofile/agent/http_method/text()") or "").upper()
-    url = xtext(root, "/datawizardprofile/agent/url/text()")
-    mime = (xtext(root, "/datawizardprofile/agent/mime_type/text()")
-            or xtext(root, "/datawizardprofile/agent/content_type/text()") or "")
-
-    # Case 1: Phase 1 custom class (e.g., QuickReport) that extracts profile info
-    # (This is the case you mentioned for 01_Mandanten_Kennung_aus_Lobster_Profilen)
+    cc = xtext(root,"//custom_class/text()")
+    has_cc = xpath_bool(root,"//custom_class[text()]")
+    method = (xtext(root,"/datawizardprofile/responsesettings/responseunits/unit_http/http_method/text()")
+              or xtext(root,"/datawizardprofile/agent/http_method/text()") or "").upper()
+    url = xtext(root,"/datawizardprofile/agent/url/text()")
+    mime = (xtext(root,"/datawizardprofile/agent/mime_type/text()")
+            or xtext(root,"/datawizardprofile/agent/content_type/text()") or "")
     if has_cc:
-        overview = (
-            f"This profile extracts profile information using the custom class '{cc}' in Phase 1. "
-            f"It gathers identifiers/attributes from existing Lobster profiles and produces a consolidated output for follow-up processing."
-        )
-
-    # Case 2: HTTP/API import profile (typical mapping flow)
+        overview = f"This profile extracts information using custom class '{cc}'."
     elif method or url:
         meth = method or "POST"
-        overview = (
-            f"This profile receives {meth} requests{(' at ' + url) if url else ''}"
-            f"{(' with ' + mime) if mime else ''} and maps the incoming data to the internal format for downstream processing."
-        )
-
-    # Fallback
+        overview = f"This profile receives {meth} requests{(' at '+url) if url else ''}{(' with '+mime) if mime else ''}."
     else:
-        ptype = xtext(root, "/datawizardprofile/type/text()")
-        overview = (
-            f"This profile is a scheduled or automated process ({ptype or 'unspecified'}). "
-            f"It transforms source data into the standardized internal schema for later steps."
-        )
-
-    return {
-        "name": "Profile Purpose",
-        "type": "kv",
-        "fields": [{"label": "Overview", "value": overview}]
-    }
+        ptype = xtext(root,"/datawizardprofile/type/text()")
+        overview = f"This profile is a scheduled or automated process ({ptype or 'unspecified'})."
+    return {"name":"Profile Purpose","type":"kv","fields":[{"label":"Overview","value":overview}]}
 
 
 # ---------- main ----------
 def main():
     args = parse_args()
-    xml_path = Path(args.xml)
-    outdir = Path(args.outdir)
-    mapping_path = Path(args.mapping)
-    templates_dir = Path(args.templates)
+    xml_path = Path(args.xml); outdir = Path(args.outdir)
+    mapping_path = Path(args.mapping); templates_dir = Path(args.templates)
     outdir.mkdir(exist_ok=True, parents=True)
 
-    # 1) Parse input + mapping
     root = load_xml(xml_path)
     mapping = load_mapping(mapping_path)
     data = apply_mapping(root, mapping)
 
-    # 2) Build dynamic "Profile Purpose" and replace any generic section
     purpose = build_profile_purpose_section(root)
-    data["sections"] = [
-        s for s in data["sections"]
-        if s.get("name") not in ("Business Context", "Profile Purpose")
-    ]
+    data["sections"] = [s for s in data["sections"] if s.get("name") not in ("Business Context","Profile Purpose")]
     data["sections"].insert(0, purpose)
 
     # 3) Workflow (steps + diagram)
@@ -467,33 +649,20 @@ def main():
     diagram_path = render_workflow_svg(info, outdir, xml_path.stem)
     if diagram_path:
         rel = Path(diagram_path).relative_to(outdir)
-        data["workflow_image"] = str(rel).replace("\\", "/")
+        data["workflow_link"] = str(rel).replace("\\", "/")   # e.g., images/<stem>_flow.svg
     else:
-        data["workflow_image"] = ""
+        data["workflow_link"] = ""
 
-    # 4) Metadata for the template
-    data["source_file"] = xml_path.name
-    if not data.get("title"):
-        data["title"] = xml_path.stem
-
-    # 5) Render HTML and PDF
-    env = Environment(
-        loader=FileSystemLoader(str(templates_dir)),
-        autoescape=select_autoescape(['html', 'xml'])
-    )
+    env = Environment(loader=FileSystemLoader(str(templates_dir)),
+                      autoescape=select_autoescape(['html','xml']))
     html = render_html(env, data)
     html_path = outdir / f"{xml_path.stem}.html"
     pdf_path = outdir / f"{xml_path.stem}.pdf"
     write_bytes(html_path, html.encode("utf-8"))
 
-    if try_pdf_from_html(html_path, pdf_path, args.wkhtmltopdf) or \
-       try_weasyprint(html_path, pdf_path) or \
-       try_reportlab_text_only(html_path, pdf_path):
-        print(f"[OK] Generated: {pdf_path.name}")
-        sys.exit(0)
-
-    print("[WARN] HTML created; PDF not generated.")
-    sys.exit(1)
+    if try_pdf_from_html(html_path,pdf_path,args.wkhtmltopdf) or try_weasyprint(html_path,pdf_path) or try_reportlab_text_only(html_path,pdf_path):
+        print(f"[OK] Generated: {pdf_path.name}"); sys.exit(0)
+    print("[WARN] HTML created; PDF not generated."); sys.exit(1)
 
 
 if __name__ == "__main__":
