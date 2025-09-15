@@ -2,19 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Lobster Profile Documentation — 01_PL_AGAT_RHD_OrderInterface_OrderImport_RHDPoland</title>
+  <title>Lobster Profile Documentation</title>
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Inline critical styles so wkhtmltopdf always picks them up -->
+  <style>
+    :root { --line:#9ca3af; }
+    .table-wrap { overflow: auto; border:1px solid var(--line); border-radius: 6px; }
+    table.mapping2 { border-collapse: collapse; width:100%; font-size:12.5px; }
+    .mapping2 th, .mapping2 td { padding:6px 8px; vertical-align: top; border:1px solid var(--line); }
+    .mapping2 thead th { text-align:left; background:#f3f4f6; font-weight:600; }
+    .mapping2 tbody tr:nth-child(even) { background:#fcfcfc; }
+
+    /* 4 columns: Source | Target | Description | How */
+    .mapping2 th:nth-child(1), .mapping2 td:nth-child(1) { width:22%; }
+    .mapping2 th:nth-child(2), .mapping2 td:nth-child(2) { width:22%; }
+    .mapping2 th:nth-child(3), .mapping2 td:nth-child(3) { width:36%; white-space:pre-line; }
+    .mapping2 th:nth-child(4), .mapping2 td:nth-child(4) { width:20%; }
+
+    /* Formula cell styling */
+    td.how { font-size:12px; line-height:1.35; }
+    td.how.as-is { color:#6b7280; font-style:italic; }
+    td.how.one-to-one { text-align:center; font-weight:600; vertical-align:middle; } /* center 1:1 */
+    .how-head{display:inline-block;background:#f1f5f9;border:1px solid #e5e7eb;padding:2px 6px;border-radius:6px;margin-bottom:4px;}
+    .how-list{margin:4px 0 0;padding-left:16px;}
+    .how-list li{margin:0;padding:0;}
+    .how-list.two-col{column-count:2;column-gap:14px;}
+    .how-plain{white-space:pre-wrap;}
+  </style>
 </head>
 <body>
   <div class="cover">
     <div class="brand">
       <img src="templates/logo.png" alt="">
     </div>
-    <h1>Lobster Profile Documentation — 01_&ZeroWidthSpace;PL_&ZeroWidthSpace;AGAT_&ZeroWidthSpace;RHD_&ZeroWidthSpace;OrderInterface_&ZeroWidthSpace;OrderImport_&ZeroWidthSpace;RHDPoland</h1>
+    <h1>Lobster Profile Documentation</h1>
     <div class="meta">
-      <div><strong>Generated:</strong> 2025-09-15 14:06</div>
-      <div><strong>Source:</strong> </div>
+      <div><strong>Generated:</strong> 2025-09-15 16:52</div>
+      <div><strong>Source:</strong> Profile-01_PL_AGAT_RHD_OrderInterface_OrderImport_RHDPoland.xml</div>
     </div>
   </div>
 
@@ -67,14 +93,14 @@
     
       <dl class="kv">
         
-          <dt>Endpoint URL</dt>
-          <dd>AGAT/Order</dd>
+          <dt>1. Where the data comes from</dt>
+          <dd>Requests are sent to the endpoint `AGAT/Order`.</dd>
         
-          <dt>Accept POST</dt>
-          <dd>true</dd>
+          <dt>2. How the data is sent</dt>
+          <dd>The system expects an HTTP POST request with the format application/xml.</dd>
         
-          <dt>API Enabled</dt>
-          <dd>true</dd>
+          <dt>3. What must be included</dt>
+          <dd>Each request contains a single order message that follows the agreed XML structure and includes the required fields (for example: order number, customer, items, quantities, and dates).</dd>
         
       </dl>
 
@@ -89,7 +115,7 @@
         <table class="mapping2">
           <thead>
             <tr>
-              <th>Source Structure</th><th>Target Structure</th><th>How it’s calculated</th>
+              <th>Source Structure</th><th>Target Structure</th><th>Description</th><th>How it’s calculated</th>
             </tr>
           </thead>
           <tbody>
@@ -105,9 +131,16 @@
                 
               
                 
+                  <td>Unique customer order number</td>
+                
+              
+                
                   
                   
                   
+                  
+                  
+
                   <td class="how">
                     
                       <div class="how-head"><strong>set display column(a,b,c)</strong></div>
@@ -300,12 +333,19 @@
                 
               
                 
+                  <td>Remark on order level</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -323,12 +363,19 @@
                 
               
                 
+                  <td>The value of an amount with two decimal digits. An point (".") has to be used as decimal separator, comma is not allowed.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -346,12 +393,19 @@
                 
               
                 
+                  <td>The value of an amount with two decimal digits. An point (".") has to be used as decimal separator, comma is not allowed.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -369,12 +423,19 @@
                 
               
                 
+                  <td>Specify the freight terms for this order</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -392,12 +453,19 @@
                 
               
                 
+                  <td>Salutation towards person or company</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -415,12 +483,19 @@
                 
               
                 
+                  <td>Type of service.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -438,12 +513,19 @@
                 
               
                 
+                  <td>If the order is updated the system can verify via the sequence number, that all previous updates have been received. Provided by sender.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -461,12 +543,19 @@
                 
               
                 
+                  <td>Street</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -484,12 +573,19 @@
                 
               
                 
+                  <td>Desired date for delivery/pickup at customers address.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -507,12 +603,19 @@
                 
               
                 
+                  <td>Goods should be picked up at customers home and returned to RHD location.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -530,12 +633,19 @@
                 
               
                 
+                  <td>The value of an amount with two decimal digits. An point (".") has to be used as decimal separator, comma is not allowed.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -553,12 +663,19 @@
                 
               
                 
+                  <td>Fax number for contacting the person/company</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -576,12 +693,19 @@
                 
               
                 
+                  <td>Postal code</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -599,12 +723,19 @@
                 
               
                 
+                  <td>Code of the location.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -622,12 +753,19 @@
                 
               
                 
+                  <td>Number of Packages per one Article</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -645,12 +783,19 @@
                 
               
                 
+                  <td>Volume of the complete order in cbm</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -668,12 +813,19 @@
                 
               
                 
+                  <td>Abbreviation of the sender. This must map to a sender (organisational unit of the client) as listed in the master data at RHD.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -691,12 +843,19 @@
                 
               
                 
+                  <td>Country of address; ISO-2-Alpha-Country-Code according to ISO 3166</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -714,9 +873,16 @@
                 
               
                 
+                  <td>Specify if the order should be created, updated or canceled</td>
+                
+              
+                
                   
                   
                   
+                  
+                  
+
                   <td class="how">
                     
                       <div class="how-head"><strong>set display column(a,b,c)</strong></div>
@@ -909,12 +1075,19 @@
                 
               
                 
+                  <td>The type of the location.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -932,12 +1105,19 @@
                 
               
                 
+                  <td>The type of the location.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -955,12 +1135,19 @@
                 
               
                 
+                  <td>House number</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -978,12 +1165,19 @@
                 
               
                 
+                  <td>Street</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1001,12 +1195,19 @@
                 
               
                 
+                  <td>Weight of one article within order in kg</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1024,12 +1225,19 @@
                 
               
                 
+                  <td>Salutation towards person or company</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1047,12 +1255,19 @@
                 
               
                 
+                  <td>House number</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1070,12 +1285,19 @@
                 
               
                 
+                  <td>The unique barcode number of a package of this position. One position can consist of multiple packages. Please specify every barcode.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1093,12 +1315,19 @@
                 
               
                 
+                  <td>Additional phone number 3 for contacting the person/company</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1116,12 +1345,19 @@
                 
               
                 
+                  <td>Additional customer order number</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1139,12 +1375,19 @@
                 
               
                 
+                  <td>Date and time of this message</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1162,12 +1405,19 @@
                 
               
                 
+                  <td>Additional customer order number</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1185,12 +1435,19 @@
                 
               
                 
+                  <td>Persons first name</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1208,12 +1465,19 @@
                 
               
                 
+                  <td>City</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1231,12 +1495,19 @@
                 
               
                 
+                  <td>Address for contacting the person/company via email</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1254,12 +1525,19 @@
                 
               
                 
+                  <td>The value of an amount with two decimal digits. An point (".") has to be used as decimal separator, comma is not allowed.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1277,12 +1555,19 @@
                 
               
                 
+                  <td>The order is only about service as furniture assembly or other. No goods will be transported.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1300,12 +1585,19 @@
                 
               
                 
+                  <td>The key or description of the attribute.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1323,12 +1615,19 @@
                 
               
                 
+                  <td>Country of address; ISO-2-Alpha-Country-Code according to ISO 3166</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1346,12 +1645,19 @@
                 
               
                 
+                  <td>Latest time for delivery/pickup at customers address.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1369,12 +1675,19 @@
                 
               
                 
+                  <td></td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1392,12 +1705,19 @@
                 
               
                 
+                  <td>Date and time when the order was placed</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1415,12 +1735,19 @@
                 
               
                 
+                  <td>Currency of the amount as ISO 4217 three alpha code.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1438,12 +1765,19 @@
                 
               
                 
+                  <td>The value/content of the attribute.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1461,12 +1795,19 @@
                 
               
                 
+                  <td>Currency of the amount as ISO 4217 three alpha code.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1484,12 +1825,19 @@
                 
               
                 
+                  <td>Remark on order level</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1507,12 +1855,19 @@
                 
               
                 
+                  <td>Currency of the amount as ISO 4217 three alpha code.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1530,12 +1885,19 @@
                 
               
                 
+                  <td>Remark on order level</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -1553,9 +1915,16 @@
                 
               
                 
+                  <td>Persons last name or company name</td>
+                
+              
+                
                   
                   
                   
+                  
+                  
+
                   <td class="how">
                     
                       <div class="how-head"><strong>replace chars(a, list b, list c)</strong></div>
@@ -2038,12 +2407,19 @@
                 
               
                 
+                  <td>Additional address information</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2061,12 +2437,19 @@
                 
               
                 
+                  <td>Customer number</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2084,12 +2467,19 @@
                 
               
                 
+                  <td>Number of the article. Usually somithing like EAN.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2107,12 +2497,19 @@
                 
               
                 
+                  <td>Type of service</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2130,12 +2527,19 @@
                 
               
                 
+                  <td>Abbreviation of the client. This must map to a client as listed in the master data at RHD.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2153,12 +2557,19 @@
                 
               
                 
+                  <td>Additional phone number 2 for contacting the person/company</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2176,12 +2587,19 @@
                 
               
                 
+                  <td>City</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2199,12 +2617,19 @@
                 
               
                 
+                  <td>Number of the order position</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2222,12 +2647,19 @@
                 
               
                 
+                  <td>Weight of the complete order in kg</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2245,12 +2677,19 @@
                 
               
                 
+                  <td>Description of the article as it should be printed on the documents.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2268,12 +2707,19 @@
                 
               
                 
+                  <td>Postal code</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2291,12 +2737,19 @@
                 
               
                 
+                  <td>The bordereau number or equivalent information for identification of the transport of the goods to the RHD location.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2314,12 +2767,19 @@
                 
               
                 
+                  <td>Additional address information</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2337,12 +2797,19 @@
                 
               
                 
+                  <td>Phone number 1 for contacting the person/company</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2360,12 +2827,19 @@
                 
               
                 
+                  <td>Additional phone number 3 for contacting the person/company</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2383,12 +2857,19 @@
                 
               
                 
+                  <td>Additional phone number 2 for contacting the person/company</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2406,12 +2887,19 @@
                 
               
                 
+                  <td>Floor information of this address</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2429,12 +2917,19 @@
                 
               
                 
+                  <td>Persons first name</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2452,12 +2947,19 @@
                 
               
                 
+                  <td>Stock Type</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2475,12 +2977,19 @@
                 
               
                 
+                  <td>Code of the location.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2498,12 +3007,19 @@
                 
               
                 
+                  <td>Fixed date for delivery/pickup at customers address already agreed with the customer.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2521,12 +3037,19 @@
                 
               
                 
+                  <td>Code of the location.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2544,12 +3067,19 @@
                 
               
                 
+                  <td>Phone number 1 for contacting the person/company</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2567,12 +3097,19 @@
                 
               
                 
+                  <td>Floor information of this address</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2590,12 +3127,19 @@
                 
               
                 
+                  <td>Date when the goods will be delivered to the RHD location.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2613,12 +3157,19 @@
                 
               
                 
+                  <td>If this order is linked to another order, you can transmit the refernced order number.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2636,12 +3187,19 @@
                 
               
                 
+                  <td>Title of person</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2659,12 +3217,19 @@
                 
               
                 
+                  <td>Quantity of the transport position</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2682,12 +3247,19 @@
                 
               
                 
+                  <td>Quantity of the transport position</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2705,12 +3277,19 @@
                 
               
                 
+                  <td>Title of person</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2728,12 +3307,19 @@
                 
               
                 
+                  <td>Volume of one article within order in cbm</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2751,12 +3337,19 @@
                 
               
                 
+                  <td>Number of the order position</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2774,12 +3367,19 @@
                 
               
                 
+                  <td>Address for contacting the person/company via email</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2797,12 +3397,19 @@
                 
               
                 
+                  <td>Currency of the amount as ISO 4217 three alpha code.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2820,12 +3427,19 @@
                 
               
                 
+                  <td>Earliest time for delivery/pickup at customers address.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -2843,9 +3457,16 @@
                 
               
                 
+                  <td>Persons last name or company name</td>
+                
+              
+                
                   
                   
                   
+                  
+                  
+
                   <td class="how">
                     
                       <div class="how-head"><strong>replace chars(a, list b, list c)</strong></div>
@@ -3328,12 +3949,19 @@
                 
               
                 
+                  <td>Fax number for contacting the person/company</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -3351,12 +3979,19 @@
                 
               
                 
+                  <td>The type of the location.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -3374,12 +4009,19 @@
                 
               
                 
+                  <td>Specify if the order should be held. If set to true, the order will be held in the RHD hub until it's released by setting hold=TRUE.</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 
@@ -3397,12 +4039,19 @@
                 
               
                 
+                  <td>Unique message id, for example the sequence number of the senders system or a timestamp</td>
+                
+              
+                
                   
                   
                   
-                  <td class="how as-is">
+                  
+                  
+
+                  <td class="how one-to-one">
                     
-                      <div class="how-plain">Copied as is from source.</div>
+                      <div class="how-plain">1:1</div>
                     
                   </td>
                 

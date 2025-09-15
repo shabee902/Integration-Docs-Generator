@@ -1,5 +1,5 @@
 # Human-friendly title; {{name}} is replaced by the profile's @name if present
-title: "Lobster Profile Documentation — {{name}}"
+title: "Lobster Profile Documentation"
 
 sections:
 

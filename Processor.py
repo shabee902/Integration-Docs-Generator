@@ -544,6 +544,94 @@ def build_steps(info):
                               "On error, execute the configured exception workflow."})
     return steps
 
+
+# ---------- NEW: Input Data (3 bullet points) ----------
+def detect_input_type_and_details(root, info):
+    """
+    Returns (type, details) where type in {"api","sftp","email","sharepoint","files"}.
+    'info' is the dict from extract_workflow_info().
+    """
+    # API if method/url/mime present
+    if info.get("method") or info.get("url"):
+        return "api", {
+            "endpoint": (info.get("url") or "").strip(),
+            "method": (info.get("method") or "POST").upper(),
+            "mime": (info.get("mime") or "application/xml"),
+        }
+
+    # Heuristics for SFTP / folder
+    host = xtext(root, "//sftp_host/text()") or xtext(root, "//ftp_host/text()") or xtext(root, "//host/text()")
+    path = xtext(root, "//path/text()") or xtext(root, "//directory/text()") or xtext(root, "//folder/text()")
+    if host or path:
+        return "sftp", {"host": host, "path": path}
+
+    # Email
+    mailbox = (xtext(root, "//email_address/text()")
+               or xtext(root, "//mailbox/text()")
+               or xtext(root, "//responsesettings/responseunits/unit_email/address/text()"))
+    if mailbox:
+        return "email", {"mailbox": mailbox}
+
+    # SharePoint / Manual upload
+    sp_site = xtext(root, "//sharepoint//site/text()") or xtext(root, "//office365//site/text()")
+    sp_folder = xtext(root, "//sharepoint//folder/text()") or xtext(root, "//office365//folder/text()")
+    if sp_site or sp_folder:
+        return "sharepoint", {"site": sp_site, "folder": sp_folder}
+
+    # Default generic "files" drop
+    return "files", {"path": path or ""}
+
+def build_input_data_fields(root, info):
+    itype, det = detect_input_type_and_details(root, info)
+
+    if itype == "api":
+        endpoint = det.get("endpoint") or "the configured endpoint"
+        method = det.get("method") or "POST"
+        mime = det.get("mime") or "application/xml"
+        return [
+            {"label": "1. Where the data comes from", "value": f"Requests are sent to the endpoint `{endpoint}`."},
+            {"label": "2. How the data is sent",      "value": f"The system expects an HTTP {method} request with the format {mime}."},
+            {"label": "3. What must be included",     "value": "Each request contains a single order message that follows the agreed XML structure and includes the required fields (for example: order number, customer, items, quantities, and dates)."},
+        ]
+
+    if itype == "sftp":
+        host = det.get("host") or "the SFTP server"
+        path = det.get("path") or "the shared folder"
+        return [
+            {"label": "1. Where the data comes from", "value": f"Files are dropped to `{host}` at `{path}`."},
+            {"label": "2. How the data is sent",      "value": "XML files encoded in UTF-8 with a consistent naming pattern (for example: `Orders_YYYYMMDD_HHMMSS_*.xml`)."},
+            {"label": "3. What must be included",     "value": "Each file contains one order message that follows the agreed structure and includes the required fields."},
+        ]
+
+    if itype == "email":
+        mailbox = det.get("mailbox") or "the designated mailbox"
+        return [
+            {"label": "1. Where the data comes from", "value": f"Messages are sent to {mailbox}."},
+            {"label": "2. How the data is sent",      "value": "Email with an XML attachment (UTF-8)."},
+            {"label": "3. What must be included",     "value": "The attachment contains one order message that follows the agreed structure and includes the required fields."},
+        ]
+
+    if itype == "sharepoint":
+        site = det.get("site") or "the SharePoint site"
+        folder = det.get("folder") or "the target folder"
+        return [
+            {"label": "1. Where the data comes from", "value": f"Files are uploaded to {site} in the folder {folder}."},
+            {"label": "2. How the data is sent",      "value": "XML files uploaded through SharePoint (UTF-8)."},
+            {"label": "3. What must be included",     "value": "Each file contains one order message with the required fields as defined in the mapping."},
+        ]
+
+    # generic files
+    return [
+        {"label": "1. Where the data comes from", "value": "Files are placed in the configured input folder."},
+        {"label": "2. How the data is sent",      "value": "XML files encoded in UTF-8 with a stable naming pattern (for example: `Orders_YYYYMMDD_*.xml`)."},
+        {"label": "3. What must be included",     "value": "Each file includes a single order message with the required fields."},
+    ]
+
+def build_input_data_section(root, info):
+    fields = build_input_data_fields(root, info)
+    return {"name": "Input Data", "type": "kv", "fields": fields}
+
+
 def render_workflow_svg(info, outdir: Path, stem: str) -> str | None:
     if not HAVE_GV:
         return None
@@ -596,7 +684,7 @@ def render_workflow_svg(info, outdir: Path, stem: str) -> str | None:
     except Exception:
         return None
 
-# --- updated: pass reliable CSS href ---
+# --- HTML render (CSS href passed explicitly) ---
 def render_html(env, data, css_href: str):
     template = env.get_template(HTML_TEMPLATE)
     return template.render(
@@ -686,13 +774,21 @@ def main():
     data = apply_mapping(root, mapping)
     data["source_file"] = xml_path.name  # shown on cover
 
-    # Insert Profile Purpose at top (replace existing if present)
+    # Insert/refresh Profile Purpose at top
     purpose = build_profile_purpose_section(root)
     data["sections"] = [s for s in data["sections"] if s.get("name") not in ("Business Context","Profile Purpose")]
     data["sections"].insert(0, purpose)
 
-    # Workflow (steps + diagram)
+    # Build workflow info
     info = extract_workflow_info(root)
+
+    # Insert Input Data (3 points), replacing any existing "Input Data"
+    data["sections"] = [s for s in data["sections"] if s.get("name") != "Input Data"]
+    input_sec = build_input_data_section(root, info)
+    # place it after Profile Purpose
+    data["sections"].insert(1, input_sec)
+
+    # Steps + diagram
     data["steps"] = build_steps(info)
     diagram_path = render_workflow_svg(info, outdir, xml_path.stem)
     data["workflow_link"] = ""
