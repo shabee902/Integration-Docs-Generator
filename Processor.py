@@ -146,8 +146,9 @@ def _b64_or_text(s: str) -> str:
 
 def explain_rule(rule_name: str, params: list[str]) -> str:
     rn = (rule_name or "").strip().lower()
+    # Shorten direct copies to "1:1" to save space
     if rn in ("copy", "identity", "") and not params:
-        return "Copied as is from source."
+        return "1:1"
     if rn in ("default", "const", "constant"):
         return f"Uses a fixed value: {params[0]!r}" if params else "Uses a fixed value."
     if rn in ("concat", "concatenate"):
@@ -185,13 +186,41 @@ def explain_rule(rule_name: str, params: list[str]) -> str:
     return f"Calculated using function '{rule_name}'" + (f" (params: {', '.join(params)})" if params else "")
 
 
-# ---------- NEW: parse formulas from <inputtree> ----------
-# ---------- NEW: build formula index (prefers outputtree, falls back to inputtree) ----------
+# ---------- Description index (outputtree preferred) ----------
+def build_description_index(root):
+    """
+    Returns dict { field_name: description_text }.
+    Scans <outputtree>//node and falls back to <inputtree>//node for a `description` attribute.
+    """
+    def collect(tree_xpath):
+        idx = {}
+        if not HAVE_LXML:
+            return idx
+        try:
+            nodes = root.xpath(f"{tree_xpath}//node")
+        except Exception:
+            nodes = []
+        for n in nodes or []:
+            name = (n.get("name") or "").strip()
+            if not name:
+                continue
+            desc = (n.get("description") or "").strip()
+            if desc:
+                idx[name] = desc
+        return idx
+
+    out_idx = collect("//outputtree")
+    in_idx  = collect("//inputtree")
+    merged = dict(in_idx)
+    merged.update(out_idx)  # outputtree wins
+    return merged
+
+
+# ---------- Formula index (outputtree preferred) ----------
 def build_formula_index(root):
     """
     Returns dict { target_field_name: human_explanation }
-    Reads <outputtree>//field[@name]/filter[...] first (this is where your formulas are),
-    and if nothing found for a field, falls back to <inputtree>//field.
+    Reads <outputtree>//field[@name]/filter[...] first, then falls back to <inputtree>//field.
     """
     def collect_from_tree(tree_xpath):
         idx = {}
@@ -228,7 +257,6 @@ def build_formula_index(root):
                         b64val = vnodes[0] if isinstance(vnodes, list) and vnodes else ""
                     except Exception:
                         b64val = ""
-                    # decode base64 if present
                     val = _b64_or_text(b64val)
 
                     if ch_type in ("linked field", "linked_field", "field", "source"):
@@ -269,14 +297,13 @@ def build_formula_index(root):
                     idx[fname] = f"Uses a fixed value: {repr(_b64_or_text(fix))}."
         return idx
 
-    # Prefer outputtree formulas
     out_idx = collect_from_tree("//outputtree")
     in_idx  = collect_from_tree("//inputtree")
 
-    # Merge (outputtree wins)
     merged = dict(in_idx)
     merged.update(out_idx)
     return merged
+
 
 # ---------- Mapping extractor ----------
 def extract_mapping_with_formulas(root):
@@ -300,17 +327,29 @@ def extract_mapping_with_formulas(root):
     if not entries:
         return rows
 
-    # Build formula index (from outputtree first, then inputtree)
+    # Build indices
     formula_idx = build_formula_index(root)
+    desc_idx = build_description_index(root)
 
     def normalize(name: str) -> str:
         if not name:
             return ""
-        # strip common Lobster adornments so Name and Name#1 can match
         n = name
         if n.endswith("_val") or n.endswith("_attr"):
             n = n.rsplit("_", 1)[0]
         return n
+
+    def lookup_desc(tgt: str) -> str:
+        if not tgt:
+            return ""
+        if tgt in desc_idx:
+            return desc_idx[tgt]
+        t_norm = normalize(tgt).split("#", 1)[0]
+        for k, v in desc_idx.items():
+            k_norm = normalize(k).split("#", 1)[0]
+            if t_norm == k_norm and v:
+                return v
+        return ""
 
     for e in entries:
         source = e.get("source") or e.get("from") or e.get("input") or e.get("src") or ""
@@ -365,11 +404,9 @@ def extract_mapping_with_formulas(root):
 
         # Prefer formula from output/input tree by matching the TARGET field name
         if target:
-            # try exact
             if target in formula_idx:
                 formula = formula_idx[target]
             else:
-                # relaxed match: strip suffixes (#1, _val, _attr) and try again
                 t_norm = normalize(target).split("#", 1)[0]
                 for key, expl in formula_idx.items():
                     k_norm = normalize(key).split("#", 1)[0]
@@ -377,9 +414,12 @@ def extract_mapping_with_formulas(root):
                         formula = expl
                         break
 
+        desc = lookup_desc(target)
+
         rows.append({
             "Source Structure": source or "(n/a)",
             "Target Structure": target or "(n/a)",
+            "Description": desc,                         # NEW COLUMN
             "How it’s calculated": formula
         })
 
@@ -395,12 +435,15 @@ def apply_mapping(root, mapping):
     except Exception:
         pass
 
+    # template reads this; set the value in main()
+    doc["source_file"] = doc.get("source_file", "")
+
     sections = mapping.get("sections", {})
     for sec_name, spec in sections.items():
         if isinstance(spec, dict) and sec_name.strip().lower() == "mapping" and spec.get("_auto") == "with_formulas":
             rows = extract_mapping_with_formulas(root)
             sec = {"name": "Mapping", "type": "table",
-                   "columns": ["Source Structure", "Target Structure", "How it’s calculated"],
+                   "columns": ["Source Structure", "Target Structure", "Description", "How it’s calculated"],
                    "rows": rows}
             if section_has_data(sec):
                 doc["sections"].append(sec)
@@ -507,8 +550,6 @@ def render_workflow_svg(info, outdir: Path, stem: str) -> str | None:
     try:
         from graphviz import Digraph
 
-        # A4 width = 8.27in. With ~12mm side margins (0.47in each), safe content ≈ 7.3in.
-        # Use a slightly smaller cap so wkhtml/weasy never clip.
         CONTENT_W_IN = 7.1
         MAX_H_IN = 2.4
 
@@ -521,8 +562,8 @@ def render_workflow_svg(info, outdir: Path, stem: str) -> str | None:
             nodesep="0.30",
             margin="0.04",
             pad="0.04",
-            size=f"{CONTENT_W_IN},{MAX_H_IN}",  # bound the overall size (no "!" so it fits within)
-            ratio="compress"                    # squeeze horizontally if needed
+            size=f"{CONTENT_W_IN},{MAX_H_IN}",
+            ratio="compress"
         )
         g.attr("node", shape="box", style="rounded", fontsize="10", fontname="Arial")
         g.attr("edge", arrowsize="0.6")
@@ -555,9 +596,14 @@ def render_workflow_svg(info, outdir: Path, stem: str) -> str | None:
     except Exception:
         return None
 
-def render_html(env, data):
+# --- updated: pass reliable CSS href ---
+def render_html(env, data, css_href: str):
     template = env.get_template(HTML_TEMPLATE)
-    return template.render(data=data, css_path=STYLE_FILE, generated=datetime.now().strftime("%Y-%m-%d %H:%M"))
+    return template.render(
+        data=data,
+        css_path=css_href,
+        generated=datetime.now().strftime("%Y-%m-%d %H:%M"),
+    )
 
 def write_bytes(path: Path, content: bytes):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -638,31 +684,51 @@ def main():
     root = load_xml(xml_path)
     mapping = load_mapping(mapping_path)
     data = apply_mapping(root, mapping)
+    data["source_file"] = xml_path.name  # shown on cover
 
+    # Insert Profile Purpose at top (replace existing if present)
     purpose = build_profile_purpose_section(root)
     data["sections"] = [s for s in data["sections"] if s.get("name") not in ("Business Context","Profile Purpose")]
     data["sections"].insert(0, purpose)
 
-    # 3) Workflow (steps + diagram)
+    # Workflow (steps + diagram)
     info = extract_workflow_info(root)
     data["steps"] = build_steps(info)
     diagram_path = render_workflow_svg(info, outdir, xml_path.stem)
+    data["workflow_link"] = ""
     if diagram_path:
-        rel = Path(diagram_path).relative_to(outdir)
-        data["workflow_link"] = str(rel).replace("\\", "/")   # e.g., images/<stem>_flow.svg
-    else:
-        data["workflow_link"] = ""
+        try:
+            rel = Path(diagram_path).relative_to(outdir)
+            data["workflow_link"] = str(rel).replace("\\", "/")
+        except Exception:
+            data["workflow_link"] = str(diagram_path)
 
     env = Environment(loader=FileSystemLoader(str(templates_dir)),
                       autoescape=select_autoescape(['html','xml']))
-    html = render_html(env, data)
+
+    # Ensure CSS sits next to the HTML (wkhtmltopdf resolves relative to the HTML file)
     html_path = outdir / f"{xml_path.stem}.html"
-    pdf_path = outdir / f"{xml_path.stem}.pdf"
+    pdf_path  = outdir / f"{xml_path.stem}.pdf"
+    css_src = Path(STYLE_FILE)
+    css_out = outdir / css_src.name
+    try:
+        if css_src.exists():
+            css_out.write_bytes(css_src.read_bytes())
+    except Exception:
+        pass
+
+    html = render_html(env, data, css_href=css_out.name)
     write_bytes(html_path, html.encode("utf-8"))
 
-    if try_pdf_from_html(html_path,pdf_path,args.wkhtmltopdf) or try_weasyprint(html_path,pdf_path) or try_reportlab_text_only(html_path,pdf_path):
-        print(f"[OK] Generated: {pdf_path.name}"); sys.exit(0)
-    print("[WARN] HTML created; PDF not generated."); sys.exit(1)
+    # Try PDF generators
+    if (try_pdf_from_html(html_path, pdf_path, args.wkhtmltopdf)
+        or try_weasyprint(html_path, pdf_path)
+        or try_reportlab_text_only(html_path, pdf_path)):
+        print(f"[OK] Generated: {pdf_path.name}")
+        sys.exit(0)
+
+    print("[WARN] HTML created; PDF not generated.")
+    sys.exit(1)
 
 
 if __name__ == "__main__":

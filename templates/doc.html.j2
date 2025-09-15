@@ -5,6 +5,32 @@
   <title>{{ data.title }}</title>
   <link rel="stylesheet" href="{{ css_path }}">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Inline critical styles so wkhtmltopdf always picks them up -->
+  <style>
+    :root { --line:#9ca3af; }
+    .table-wrap { overflow: auto; border:1px solid var(--line); border-radius: 6px; }
+    table.mapping2 { border-collapse: collapse; width:100%; font-size:12.5px; }
+    .mapping2 th, .mapping2 td { padding:6px 8px; vertical-align: top; border:1px solid var(--line); }
+    .mapping2 thead th { text-align:left; background:#f3f4f6; font-weight:600; }
+    .mapping2 tbody tr:nth-child(even) { background:#fcfcfc; }
+
+    /* 4 columns: Source | Target | Description | How */
+    .mapping2 th:nth-child(1), .mapping2 td:nth-child(1) { width:22%; }
+    .mapping2 th:nth-child(2), .mapping2 td:nth-child(2) { width:22%; }
+    .mapping2 th:nth-child(3), .mapping2 td:nth-child(3) { width:36%; white-space:pre-line; }
+    .mapping2 th:nth-child(4), .mapping2 td:nth-child(4) { width:20%; }
+
+    /* Formula cell styling */
+    td.how { font-size:12px; line-height:1.35; }
+    td.how.as-is { color:#6b7280; font-style:italic; }
+    td.how.one-to-one { text-align:center; font-weight:600; vertical-align:middle; } /* center 1:1 */
+    .how-head{display:inline-block;background:#f1f5f9;border:1px solid #e5e7eb;padding:2px 6px;border-radius:6px;margin-bottom:4px;}
+    .how-list{margin:4px 0 0;padding-left:16px;}
+    .how-list li{margin:0;padding:0;}
+    .how-list.two-col{column-count:2;column-gap:14px;}
+    .how-plain{white-space:pre-wrap;}
+  </style>
 </head>
 <body>
   <div class="cover">
@@ -62,12 +88,17 @@
               {% for col in sec.columns %}
                 {% if col == "How it’s calculated" %}
                   {% set raw = (row[col] or "").strip() %}
-                  {% set parts = raw.split(":", 1) %}
-                  {% set is_copy = raw and raw.lower().startswith('copied as is') %}
-                  <td class="how{{ ' as-is' if is_copy }}">
-                    {% if is_copy %}
+                  {% set is_one_to_one = (raw == "1:1") %}
+                  {% set is_copy_phrase = raw and raw.lower().startswith('copied as is') %}
+                  {# Only split on ":" if it's not the literal "1:1" #}
+                  {% set parts = (raw.split(":", 1) if (":" in raw and not is_one_to_one) else []) %}
+
+                  <td class="how{{ ' one-to-one' if is_one_to_one }}{{ ' as-is' if is_copy_phrase }}">
+                    {% if is_one_to_one %}
+                      <div class="how-plain">1:1</div>
+                    {% elif is_copy_phrase %}
                       <div class="how-plain">{{ raw }}</div>
-                    {% elif parts|length == 2 %}
+                    {% elif parts and parts|length == 2 %}
                       <div class="how-head"><strong>{{ parts[0] }}</strong></div>
 
                       {# Split on commas that are NOT inside single quotes #}

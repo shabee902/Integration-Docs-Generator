@@ -1,7 +1,7 @@
 :root {
   --text:#1e1f23;
   --muted:#6b7280;
-  --line:#e5e7eb;
+  --line:#9ca3af;        /* darker grey for visible grid */
   --accent:#0ea5e9;
   --bg:#ffffff;
 }
@@ -55,22 +55,24 @@ h2 { font-size: 17px; margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px 
 .workflow-link a:hover { background:#f8fafc; }
 
 /* Tables */
-.table-wrap { overflow: auto; border:1px solid var(--line); border-radius: 8px; }
-table { border-collapse: separate; border-spacing: 0; width:100%; font-size: 12.5px; }
-th, td { padding: 6px 8px; vertical-align: top; }
-thead th { text-align:left; background: #f3f4f6; border-bottom:1px solid var(--line); }
+.table-wrap { overflow: auto; border:1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width:100%; font-size: 12.5px; }
+th, td { padding: 6px 8px; vertical-align: top; border:1px solid var(--line); }
+thead th { text-align:left; background: #f3f4f6; font-weight:600; }
 tbody tr:nth-child(even) { background: #fcfcfc; }
-tbody td { border-top: 1px solid var(--line); }
-td, th { word-break: break-word; }
 
-/* Mapping table column widths */
-.mapping2 th:nth-child(1), .mapping2 td:nth-child(1) { width: 28%; }
-.mapping2 th:nth-child(2), .mapping2 td:nth-child(2) { width: 27%; }
-.mapping2 th:nth-child(3), .mapping2 td:nth-child(3) { width: 45%; }
+/* Mapping table column widths (4 columns) */
+.mapping2 th:nth-child(1), .mapping2 td:nth-child(1) { width: 22%; }
+.mapping2 th:nth-child(2), .mapping2 td:nth-child(2) { width: 22%; }
+.mapping2 th:nth-child(3), .mapping2 td:nth-child(3) { width: 36%; } /* Description */
+.mapping2 th:nth-child(4), .mapping2 td:nth-child(4) { width: 20%; } /* How */
 
 /* Formula cell styling */
 td.how { font-size: 12px; line-height: 1.35; }
-td.how.as-is { color: var(--muted); font-style: italic; } /* de-emphasize boilerplate */
+td.how.as-is { color: var(--muted); font-style: italic; }
+td.how.one-to-one { text-align: center; font-weight: 600; vertical-align: middle; }  /* center 1:1 */
+
+/* Bullet list inside formula cells */
 .how-head {
   display:inline-block;
   background:#f1f5f9;
