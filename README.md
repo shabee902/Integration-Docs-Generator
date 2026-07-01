@@ -60,3 +60,4 @@ WKHTMLTOPDF = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
 ```
 
 Generated: 2025-08-13 13:00
+⁣
